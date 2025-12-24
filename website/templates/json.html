@@ -1,0 +1,29 @@
+<!DOCTYPE HTML>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="/static/jsoneditor/jsoneditor.min.css">
+    <script src="/static/jsoneditor/jsoneditor.min.js"></script>
+    <title>JSON Viewer</title>
+</head>
+<body class="json-viewer">
+<form>
+  <div id="jsoneditor"></div>
+</form>
+<script>
+const container = document.getElementById("jsoneditor");
+const editor = new JSONEditor(container, {
+  mode: "view",
+ 
+   
+    escapeUnicode: false,
+     onExpand: (options) => {
+    console.log("Expanded node:", options.path);
+    
+      }
+
+});
+
+editor.set({{ json_data | tojson | safe }});
+</script>

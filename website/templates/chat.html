@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <style>
+        body {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            margin: 0;
+        }
+        
+        .chat-header {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+            padding: 0px;
+            background: white;
+            border-bottom: 1px solid var(--border-color);
+        }
+        
+        .chat-header img {
+            height: 40px;
+            width: auto;
+        }
+        
+        .chat-header h1 {
+            margin: 0;
+            font-size: var(--font-size-xlarge);
+            color: var(--primary-color);
+        }
+        
+        .chat-box {
+            flex: 1;
+            overflow-y: auto;
+            margin-top: 20px;
+            margin-bottom: 20px;
+            margin-left: 10px;
+            margin-right: 10px;
+            border-radius: 10px;
+            background: white;
+        }
+        
+        .chat-input-container {
+            padding: 10px;
+            background: var(--background-color);
+            border-top: 1px solid var(--border-color);
+        }
+        
+        .chat-input {
+            position: relative;
+            display: flex;
+            align-items: flex-end;
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 10px;
+            border: 2px solid var(--primary-color);
+            box-shadow: 0 2px 10px rgba(0, 123, 255, 0.1);
+            transition: all 0.3s ease;
+            min-height: 30px;
+        }
+        
+        .chat-input:focus-within {
+            border-color: var(--primary-hover);
+            box-shadow: 0 4px 20px rgba(0, 123, 255, 0.2);
+        }
+        
+        .chat-input textarea {
+            flex: 1;
+            padding: 3px 50px 3px 12px;
+            font-size: 16px;
+            font-family: var(--font-family);
+            border: none;
+            background: transparent;
+            outline: none;
+            resize: none;
+            overflow-y: hidden;
+            min-height: 24px;
+            max-height: 200px;
+            line-height: 1.5;
+        }
+        
+        .chat-input button {
+            position: absolute;
+            right: 5px;
+            bottom: 5px;
+            padding: 10px;
+            width: 40px;
+            height: 40px;
+            font-size: 18px;
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0;
+        }
+        
+        .chat-input button:hover {
+            background-color: var(--primary-hover);
+            transform: scale(1.1);
+        }
+        
+        .message {
+            margin: 15px 0;
+            padding: 12px 18px;
+            border-radius: 20px;
+            max-width: 70%;
+            word-wrap: break-word;
+        }
+        
+        .user-message {
+            background: var(--primary-color);
+            color: white;
+            margin-left: auto;
+            border-bottom-right-radius: 5px;
+        }
+        
+        .gemini-message {
+            background: white;
+            color: var(--text-color);
+            border: 1px solid var(--border-light);
+            border-bottom-left-radius: 5px;
+            text-align: left
+        }
+        
+        .welcome-message {
+            background: var(--background-color);
+            color: var(--text-color);
+            border: 1px solid var(--border-light);
+            border-radius: 15px;
+            text-align: left;
+            font-style: italic;
+            opacity: 0.8;
+        }
+    </style>
+</head>
+<body>
+    <div class="chat-header">
+        <img src="{{ url_for('static', filename='images/willma.png') }}" alt="wiLLMa Logo" style="height: 60px;">
+        <h1>Ask wiLLMa</h1>
+    </div>
+    <div class="chat-box" id="chat-box">
+        {% if welcome_message %}
+        <div class="message welcome-message">
+            {{ welcome_message }}
+        </div>
+        {% endif %}
+    </div>
+    <div class="chat-input-container">
+        <div class="chat-input">
+            <textarea id="user-message" placeholder="Type your message..." onkeydown="handleKeyDown(event)" oninput="autoResize(this)" rows="1"></textarea>
+            <button onclick="sendMessage()" style="display: flex; align-items: center; justify-content: center;"><img src="{{ url_for('static', filename='images/send.png') }}" alt="Send" style="width: 24px; height: 24px;"></button>
+        </div>
+    </div>
+
+    <script>
+        function autoResize(textarea) {
+            textarea.style.height = 'auto';
+            textarea.style.height = Math.min(textarea.scrollHeight, 200) + 'px';
+        }
+
+        function handleKeyDown(event) {
+            if (event.key === 'Enter' && !event.shiftKey) {
+                sendMessage();
+                event.preventDefault();
+            }
+        }
+
+        function toggleSources(sourceListId) {
+            const sourceList = document.getElementById(sourceListId);
+            sourceList.style.display = sourceList.style.display === 'none' ? 'block' : 'none';
+        }
+
+        function closeSources(sourceListId) {
+            const sourceList = document.getElementById(sourceListId);
+            sourceList.style.display = 'none';
+        }
+
+        async function sendMessage() {
+            const userMessage = document.getElementById('user-message').value;
+            if (!userMessage) return;
+
+            // Display user message
+            const chatBox = document.getElementById('chat-box');
+            const userMessageDiv = document.createElement('div');
+            userMessageDiv.className = 'message user-message';
+            userMessageDiv.textContent = userMessage;
+            chatBox.appendChild(userMessageDiv);
+
+            // Clear input
+            const messageInput = document.getElementById('user-message');
+            messageInput.value = '';
+            messageInput.style.height = 'auto';
+
+            // Display loading animation
+            const loadingDiv = document.createElement('div');
+            loadingDiv.className = 'message gemini-message loading';
+            loadingDiv.textContent = 'Typing...';
+            chatBox.appendChild(loadingDiv);
+
+            try {
+                // Send message to the server                
+                docids = {{ docids | tojson }}
+                const chat_url = '/chat' + (docids.length > 0 ? '?' + docids.map(x => `docid=${x}`).join('&') : '');
+                const response = await fetch(chat_url, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ message: userMessage })
+                });
+
+                const data = await response.json();
+
+                // Remove loading animation
+                chatBox.removeChild(loadingDiv);
+
+                // Display Gemini's response with Markdown formatting
+                const geminiMessageDiv = document.createElement('div');
+                geminiMessageDiv.className = 'message gemini-message markdown';
+                geminiMessageDiv.innerHTML = window.marked.parse(data.response || 'No response');
+
+                // Add sources icon
+                const sourceIcon = document.createElement('span');
+                sourceIcon.className = 'source-icon';
+                sourceIcon.innerHTML = '<img src="/static/images/book_icon.png" alt="Sources"> View Sources';
+                const sourceListId = `source-list-${Date.now()}`;
+                sourceIcon.onclick = () => toggleSources(sourceListId);
+
+                // Create source list
+                const sourceList = document.createElement('div');
+                sourceList.className = 'source-list';
+                sourceList.id = sourceListId;
+                const sources = data.sources || [];
+                const sourceItems = sources.map((source, index) => {
+                    const pages = source.pages.join(', ');
+                    return `<li><a href="/view/${source.docindex}/${source.docid}" target="_blank">Document ${index + 1}</a>; Pages: ${pages}</li>`;
+                }).join('');
+                sourceList.innerHTML = `<button class="close-btn" onclick="closeSources('${sourceListId}')">&times;</button><strong>Sources:</strong><ol>${sourceItems}</ol>`;
+
+                geminiMessageDiv.appendChild(sourceIcon);
+                geminiMessageDiv.appendChild(sourceList);
+                chatBox.appendChild(geminiMessageDiv);
+
+                // Scroll to the bottom
+                chatBox.scrollTop = chatBox.scrollHeight;
+            } catch (error) {
+                console.error('Error:', error);
+                chatBox.removeChild(loadingDiv);
+            }
+        }
+    </script>
+</body>
+</html>

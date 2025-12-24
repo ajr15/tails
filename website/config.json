@@ -1,0 +1,43 @@
+{
+    "index": "pdfs",
+    "elasticsearch_url": "http://localhost:9200",
+    "search_fields": ["*"],
+    "similar_document_fields": ["grobid.metadata.title", "huridocs.title", "content","meta.title"],
+    "open_file_types": ["pdf", "jpeg", "png"],
+    "display_fields": [
+        {"field": "huridocs.title", "display_name": "Title", "style": "$VALUE","use_highlights": true},
+        {"field": "file.extension", "display_name": "File Type", "style": "$VALUE","use_highlights": true},
+        {"field": "grobid.abstract.text", "display_name": "Abstract", "style": "$VALUE","use_highlights": true, "max_length": 1000},
+        {"field": "path.real", "display_name": "Path", "style": "$VALUE","use_highlights": true},
+        {"field": "file.created", "display_name": "Creation Time", "style": "$VALUE"},
+        {"field": "content", "display_name": "Content", "style": "$VALUE", "use_highlights": true, "max_length": 1000},
+        {"field": "dwg_content.content", "display_name": "Content", "style": "$VALUE", "use_highlights": true, "max_length": 1000}
+
+    ],
+    "highlight_fields": [ "file.filename","dwg_content.file","content", "dwg_content.layers", "dwg_content.content", "dwg_content.contentrev",
+     "dwg_content.imagenames", "path.real","huridocs.title", "grobid.metadata.title", "grobid.abstract.text", "meta.title"],
+    "base_paths": {},
+    "results_per_page": 15,
+    "fscrawler": {
+        "exe": "None",
+        "config_dir": "None",
+        "defaults": "None"
+    },
+    "dwg_indexer": {
+        "path": "..\\DwgTextract\\dwgtextract.exe",
+        "fonts_csv": "..\\DwgTextract\\Resources\\encode_list.csv",
+        "fonts_dir": "..\\DwgTextract\\Resources\\Fonts\\"
+    },
+    "semantic_search": {
+        "model_path": "all-MiniLM-L6-v2", 
+        "chunk_index": "pdfs_chunks",
+        "nchunks": 1000,
+        "ndocs": 100
+    },
+    "chat_settings": {
+        "key": "AIzaSyARwXAiNyAhR1PGcRPINJ8xkxnXIBN-rHM",
+        "system_prompt": "",
+        "model_name": "llama3.2:latest",
+        "welcome_message": "Welcome to wiLLMa chat! You're welcome to ask me anything about $SOURCE!"
+    }
+}

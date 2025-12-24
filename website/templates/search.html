@@ -1,0 +1,669 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>tails</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <style>
+        body {
+            display: flex;
+            margin: 0;
+            overflow-x: visible;
+        }
+        
+        .main-wrapper {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            transition: margin-right 0.3s ease;
+            min-width: 0;
+            position: relative;
+            z-index: 1;
+            overflow-x: hidden;
+        }
+        
+        .main-wrapper.chat-open {
+            margin-right: 400px;
+        }
+        
+        .search-page-container {
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+        
+        .search-header {
+            padding: 20px;
+            background: white;
+            border-bottom: 1px solid var(--border-color);
+        }
+        
+        .search-top-bar {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        .search-logo {
+            height: 50px;
+            width: auto;
+            flex-shrink: 0;
+        }
+        
+        .search-form-wrapper {
+            flex: 1;
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+        
+        .search-bar-container {
+            position: relative;
+            flex: 1;
+            display: flex;
+            align-items: center;
+            background: white;
+            border: 2px solid var(--primary-color);
+            border-radius: 50px;
+            box-shadow: 0 2px 10px rgba(0, 123, 255, 0.1);
+            transition: all 0.3s ease;
+        }
+        
+        .search-bar-container:focus-within {
+            border-color: var(--primary-hover);
+            box-shadow: 0 4px 20px rgba(0, 123, 255, 0.2);
+        }
+        
+        .search-bar-container input {
+            flex: 1;
+            padding: 18px 25px;
+            font-size: 18px;
+            border: none;
+            background: transparent;
+            outline: none;
+        }
+        
+        .search-actions {
+            display: flex;
+            gap: 5px;
+            padding-right: 5px;
+        }
+        
+        .search-action-btn {
+            padding: 10px;
+            width: 40px;
+            height: 40px;
+            font-size: 18px;
+            background-color: transparent;
+            color: var(--primary-color);
+            border: none;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            margin: 0;
+        }
+        
+        .search-action-btn:hover {
+            background-color: var(--primary-color);
+            color: white;
+            transform: scale(1.1);
+        }
+        
+        .search-action-btn.active {
+            background-color: var(--primary-color);
+        }
+        
+        .search-action-btn .tooltip {
+            position: absolute;
+            bottom: -35px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 5px 10px;
+            border-radius: 5px;
+            font-size: 12px;
+            white-space: nowrap;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+        }
+        
+        .search-action-btn:hover .tooltip {
+            opacity: 1;
+        }
+        
+        .filter-dropdown-btn {
+            padding: 12px;
+            width: 45px;
+            height: 45px;
+            font-size: 20px;
+            background-color: transparent;
+            color: var(--primary-color);
+            border: none;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            margin: 0;
+        }
+        
+        .filter-dropdown-btn:hover {
+            background-color: var(--primary-color);
+            color: white;
+            transform: scale(1.1);
+        }
+
+        .filter-dropdown-btn img {
+            pointer-events: none;
+        }
+        
+        .filter-dropdown-btn .tooltip {
+            position: absolute;
+            bottom: -35px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 5px 10px;
+            border-radius: 5px;
+            font-size: 12px;
+            white-space: nowrap;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+        }
+        
+        .filter-dropdown-btn:hover .tooltip {
+            opacity: 1;
+        }
+        
+        .filter-dropdown {
+            position: relative;
+            display: inline-block;
+        }
+        
+        .filter-dropdown-content {
+            display: none;
+            position: absolute;
+            right: 0;
+            top: 50px;
+            background-color: white;
+            min-width: 250px;
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+            border-radius: 10px;
+            padding: 20px;
+            z-index: 1000;
+            border: 1px solid var(--border-light);
+        }
+        
+        .filter-dropdown-content.show {
+            display: block;
+        }
+        
+        .filter-dropdown-content h4 {
+            margin: 0 0 15px 0;
+            font-size: 16px;
+        }
+        
+        .filter-option {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 10px;
+        }
+        
+        .filter-option label {
+            font-weight: normal;
+            margin: 0;
+        }
+        
+        .search-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        .results-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        
+        .results-header h3 {
+            margin: 0;
+            text-align: left;
+        }
+        
+        .result-item {
+            position: relative;
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+            border: 1px solid var(--border-light);
+        }
+        
+        .result-item:hover {
+            box-shadow: 0 4px 16px rgba(0, 123, 255, 0.15);
+            transform: translateY(-2px);
+        }
+        
+        .result-actions {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+        
+        .result-action-btn {
+            padding: 10px;
+            width: 45px;
+            height: 45px;
+            font-size: 20px;
+            background-color: transparent;
+            color: var(--primary-color);
+            border: none;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+        
+        .result-action-btn:hover {
+            background-color: var(--primary-color);
+            color: white;
+            transform: scale(1.15);
+        }
+        
+        .result-action-btn.active {
+            background-color: var(--primary-color);
+        }
+        
+        .result-action-btn .tooltip {
+            position: absolute;
+            top: -30px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 5px 10px;
+            border-radius: 5px;
+            font-size: 11px;
+            white-space: nowrap;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+            z-index: 10;
+        }
+        
+        .result-action-btn:hover .tooltip {
+            opacity: 1;
+        }
+        
+        .result-content {
+            padding-right: 120px;
+        }
+    </style>
+</head>
+<body>
+
+
+    <!-- Chat Windows -->
+    <div class="main-wrapper" id="main-wrapper">
+        <div class="search-page-container">
+            <!-- Header with Logo and Search Bar -->
+            <div class="search-header">
+                <div class="search-top-bar">
+                    <a href="/">
+                        <img src="{{ url_for('static', filename='images/dino_head.png') }}" alt="Tails Logo" class="search-logo" style="width: 80px; height: 80px">
+                    </a>
+                    <div class="search-form-wrapper">
+                        <form action="/" method="post" id="search-form" style="flex: 1;">
+                            <div class="search-bar-container">
+                                <input type="text" id="query" name="query" value="{{ query }}" placeholder="Search your documents..." required>
+                                <input type="hidden" id="search_mode" name="search_mode" value="normal">
+                                <div class="search-actions">
+                                    <button type="submit" class="search-action-btn" id="search-btn" onclick="setSearchMode('normal')">
+                                        <img src="{{ url_for('static', filename='images/search_color.png') }}" alt="Search" style="width: 24px; height: 24px;">
+                                        <span class="tooltip">Search</span>
+                                    </button>
+                                    <button type="submit" class="search-action-btn" id="ai-search-btn" onclick="setSearchMode('ai')">
+                                        <img src="{{ url_for('static', filename='images/ai_search_color.png') }}" alt="Search" style="width: 24px; height: 24px;">
+                                        <span class="tooltip">AI Search (beta)</span>
+                                    </button>
+                                    <div style="width: 2px; height: 24px; background-color: var(--border-color); margin: auto auto;"></div>
+                                    <button type="button" class="search-action-btn" id="chat-btn" onclick="toggleChat()">
+                                        <img src="{{ url_for('static', filename='images/chat_color.png') }}" alt="Search" style="width: 24px; height: 24px;">
+                                        <span class="tooltip">Chat with Results</span>
+                                    </button>
+                                </div>
+                            </div>
+                        </form>
+                        
+                        <div class="filter-dropdown">
+                            <button class="filter-dropdown-btn" id="filter-btn" onclick="toggleFilterDropdown()">
+                                <img src="{{ url_for('static', filename='images/filter_color.png') }}" alt="Filters" style="width: 24px; height: 24px;">
+                                <span class="tooltip">Filters</span>
+                            </button>
+                            <div class="filter-dropdown-content" id="filterDropdown">
+                                <h4>File Types</h4>
+                                <form method="post" id="filter-form">
+                                    <input type="hidden" name="query" value="{{ query }}">
+                                    {% for ext in available_extensions %}
+                                    <div class="filter-option">
+                                        <input type="checkbox" name="file_extensions" id="ext_{{ ext }}" value="{{ ext }}" {% if ext in selected_extensions %}checked{% endif %}>
+                                        <label for="ext_{{ ext }}">{{ ext }}</label>
+                                    </div>
+                                    {% endfor %}
+                                    <button type="submit" style="width: 100%; margin-top: 15px; padding: 10px; background-color: var(--primary-color); color: white; border: none; border-radius: 25px; cursor: pointer;">
+                                        Apply
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Main Content Area -->
+            <div class="search-content">
+                <div class="results-header">
+                    {% if total_hits > 0 %}
+                    <h3>Found {{ total_hits }} files</h3>
+                    {% else %}
+                    <h3>No files to display</h3>
+                    {% endif %}
+                </div>
+            
+                <div class="grid-container" style="margin: 0;">
+                    {% for hit in hits %}
+                        <div class="result-item">
+                            <div class="result-actions">
+                                <button class="result-action-btn" id="download-doc-{{ loop.index }}"
+                                    onclick="window.open('/view/{{ hit.hit["_index"] }}/{{ hit.hit["_id"] }}', '_blank')">
+                                    <img src="{{ url_for('static', filename='images/download_color.png') }}" alt="Download" style="width: 24px; height: 24px;">
+                                    <span class="tooltip">Download</span>
+                                </button>
+                                <button class="result-action-btn" id="chat-doc-{{ loop.index }}" onclick="toggleChatWithDocument('{{ hit.hit["_id"] }}', this)">
+                                    <img src="{{ url_for('static', filename='images/chat_color.png') }}" alt="Chat" style="width: 24px; height: 24px;">
+                                    <span class="tooltip">Chat with Document</span>
+                                </button>
+                                <button class="result-action-btn" id="similar-doc-{{ loop.index }}"
+                                    onclick="window.location.href='/more/{{ hit.hit["_id"] }}'">
+                                    <img src="{{ url_for('static', filename='images/similar_docs_color.png') }}" alt="Similar" style="width: 24px; height: 24px;">
+                                    <span class="tooltip">More like this</span>
+                                </button>
+                            </div>
+                            <div class="result-content">
+                                {{ hit.make_html()|safe }}
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            
+                {% if total_hits > results_per_page %}
+                    <div class="pagination">
+                        {% for p in range(1, (total_hits // results_per_page) + 2) %}
+                            {% if page == p %}
+                                <a href="?page={{ p }}&query={{ query }}" class="current">{{ p }}</a>
+                            {% else %}
+                                <a href="?page={{ p }}&query={{ query }}">{{ p }}</a>
+                            {% endif %}
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <div class="chat-window" id="chat-window">
+        <button class="close-btn" onclick="toggleChat()">×</button>
+        <iframe src="/chat"></iframe>
+    </div>
+
+    <script>
+        function setSearchMode(mode) {
+            document.getElementById('search_mode').value = mode;
+        }
+        
+        function toggleFilterDropdown() {
+            const dropdown = document.getElementById('filterDropdown');
+            dropdown.classList.toggle('show');
+        }
+        
+        // Close dropdown when clicking outside
+        window.onclick = function(event) {
+            const filterDropdown = document.getElementById('filterDropdown');
+            const filterButton = document.querySelector('.filter-dropdown-btn');
+            
+            // Don't close if clicking inside the dropdown or on the button
+            if (!event.target.matches('.filter-dropdown-btn') && 
+                !filterDropdown.contains(event.target)) {
+                const dropdowns = document.getElementsByClassName('filter-dropdown-content');
+                for (let i = 0; i < dropdowns.length; i++) {
+                    const openDropdown = dropdowns[i];
+                    if (openDropdown.classList.contains('show')) {
+                        openDropdown.classList.remove('show');
+                    }
+                }
+            }
+        }
+      
+        function toggleChat() {
+            const chatWindow = document.getElementById('chat-window');
+            const mainWrapper = document.getElementById('main-wrapper');
+            const chatButtons = document.querySelectorAll('.search-action-btn');
+            const chatWithResultsBtn = chatButtons[2]; // The third button (chat with results)
+            const iframe = chatWindow.querySelector('iframe');
+            
+            if (chatWindow.style.display === 'none' || chatWindow.style.display === '') {
+                // Remove active state from all document chat buttons
+                document.querySelectorAll('.result-action-btn').forEach(btn => btn.classList.remove('active'));
+                chatWithResultsBtn.classList.add('active');
+                // Set iframe to general chat
+                hits = {{ hits | tojson }}
+                iframe.src = '/chat' + (hits.length > 0 ? '?' + hits.map(hit => `docid=${hit.hit["_id"]}`).join('&') : '');
+                chatWindow.style.display = 'block';
+                mainWrapper.classList.add('chat-open');
+                chatWithResultsBtn.classList.add('active');
+            } else {
+                document.querySelectorAll('.result-action-btn').forEach(btn => btn.classList.remove('active'));
+                chatWindow.style.display = 'none';
+                mainWrapper.classList.remove('chat-open');
+                chatWithResultsBtn.classList.remove('active');
+            }
+        }
+
+        function toggleChatWithDocument(docid, buttonElement) {
+            const chatWindow = document.getElementById('chat-window');
+            const mainWrapper = document.getElementById('main-wrapper');
+            const iframe = chatWindow.querySelector('iframe');
+            const chatButtons = document.querySelectorAll('.search-action-btn');
+            const chatWithResultsBtn = chatButtons[2]; // The third button (chat with results)
+            
+            // Close chat window if already open
+            if (chatWindow.style.display === 'block') {
+            chatWindow.style.display = 'none';
+            mainWrapper.classList.remove('chat-open');
+            chatWithResultsBtn.classList.remove('active');
+            document.querySelectorAll('.result-action-btn').forEach(btn => btn.classList.remove('active'));
+            return;
+            }
+            
+            // Remove active state from chat with results button
+            chatWithResultsBtn.classList.remove('active');
+            
+            // Remove active state from all document chat buttons
+            document.querySelectorAll('.result-action-btn').forEach(btn => btn.classList.remove('active'));
+            
+            // Set iframe source and show chat
+            iframe.src = docid ? `/chat?docid=${docid}` : '/chat';
+            chatWindow.style.display = 'block';
+            mainWrapper.classList.add('chat-open');
+            
+            // Add active state to the clicked button
+            if (buttonElement) {
+            buttonElement.classList.add('active');
+            }
+        }
+        
+        // Handle button hover for image swapping
+        const searchBtn = document.getElementById('search-btn');
+        const aiSearchBtn = document.getElementById('ai-search-btn');
+        const chatBtn = document.getElementById('chat-btn');
+        
+        if (searchBtn) {
+            searchBtn.addEventListener('mouseenter', function() {
+                this.querySelector('img').src = "{{ url_for('static', filename='images/search.png') }}";
+            });
+            searchBtn.addEventListener('mouseleave', function() {
+                this.querySelector('img').src = "{{ url_for('static', filename='images/search_color.png') }}";
+            });
+        }
+        
+        if (aiSearchBtn) {
+            aiSearchBtn.addEventListener('mouseenter', function() {
+                this.querySelector('img').src = "{{ url_for('static', filename='images/ai_search.png') }}";
+            });
+            aiSearchBtn.addEventListener('mouseleave', function() {
+                this.querySelector('img').src = "{{ url_for('static', filename='images/ai_search_color.png') }}";
+            });
+        }
+        
+        if (chatBtn) {
+            chatBtn.addEventListener('mouseenter', function() {
+                this.querySelector('img').src = "{{ url_for('static', filename='images/chat.png') }}";
+            });
+            chatBtn.addEventListener('mouseleave', function() {
+                if (!this.classList.contains('active')) {
+                    this.querySelector('img').src = "{{ url_for('static', filename='images/chat_color.png') }}";
+                }
+            });
+        };
+            
+        // Update chat button image when active state changes
+        const observer = new MutationObserver(() => {
+            if (chatBtn.classList.contains('active')) {
+            chatBtn.querySelector('img').src = "{{ url_for('static', filename='images/chat.png') }}"; 
+            } else {
+            chatBtn.querySelector('img').src = "{{ url_for('static', filename='images/chat_color.png') }}"; 
+            }
+        });
+        
+        if (chatBtn) {
+            observer.observe(chatBtn, { attributes: true, attributeFilter: ['class'] });
+        }
+        
+        // Handle filter button hover
+        const filterBtn = document.getElementById('filter-btn');
+        if (filterBtn) {
+            filterBtn.addEventListener('mouseenter', function() {
+                this.querySelector('img').src = "{{ url_for('static', filename='images/filter.png') }}";
+            });
+            filterBtn.addEventListener('mouseleave', function() {
+                this.querySelector('img').src = "{{ url_for('static', filename='images/filter_color.png') }}";
+            });
+        }
+        
+        // Handle result action button hovers
+        document.querySelectorAll('.result-action-btn').forEach(btn => {
+            const img = btn.querySelector('img');
+            if (!img) return;
+            
+            const originalSrc = img.src;
+            const hoverSrc = originalSrc.replace('_color.png', '.png');
+            
+            btn.addEventListener('mouseenter', function() {
+                if (!this.classList.contains('active')) {
+                    img.src = hoverSrc;
+                }
+            });
+            
+            btn.addEventListener('mouseleave', function() {
+                if (!this.classList.contains('active')) {
+                    img.src = originalSrc;
+                }
+            });
+        });
+        
+        // Combine search form and filter form parameters on submission
+        const searchForm = document.getElementById('search-form');
+        const filterForm = document.getElementById('filter-form');
+        
+        // When search form is submitted, add filter parameters
+        if (searchForm) {
+            searchForm.addEventListener('submit', function(event) {
+                if (!filterForm) return;
+                
+                // Get checked file extensions from filter form
+                const checkedExtensions = filterForm.querySelectorAll('input[name="file_extensions"]:checked');
+                
+                // Add them as hidden inputs to search form
+                checkedExtensions.forEach(ext => {
+                    const hiddenExt = document.createElement('input');
+                    hiddenExt.type = 'hidden';
+                    hiddenExt.name = 'file_extensions';
+                    hiddenExt.value = ext.value;
+                    searchForm.appendChild(hiddenExt);
+                });
+            });
+        }
+        
+        // When filter form is submitted, add search parameters
+        if (filterForm) {
+            filterForm.addEventListener('submit', function(event) {
+                if (!searchForm) return;
+                
+                // Get query value from search form
+                const queryInput = searchForm.querySelector('input[name="query"]');
+                if (queryInput && queryInput.value) {
+                    // Check if query already exists in filter form
+                    const existingQuery = filterForm.querySelector('input[name="query"]');
+                    if (existingQuery) {
+                        existingQuery.value = queryInput.value;
+                    }
+                }
+                
+                // Get search_mode value from search form
+                const searchModeInput = searchForm.querySelector('input[name="search_mode"]');
+                if (searchModeInput && searchModeInput.value && searchModeInput.value !== 'normal') {
+                    const hiddenMode = document.createElement('input');
+                    hiddenMode.type = 'hidden';
+                    hiddenMode.name = 'search_mode';
+                    hiddenMode.value = searchModeInput.value;
+                    filterForm.appendChild(hiddenMode);
+                }
+                
+                // Get search_type if it exists (for AI search)
+                const searchTypeInput = searchForm.querySelector('input[name="search_type"]');
+                if (searchTypeInput) {
+                    const hiddenType = document.createElement('input');
+                    hiddenType.type = 'hidden';
+                    hiddenType.name = 'search_type';
+                    hiddenType.value = searchTypeInput.value;
+                    filterForm.appendChild(hiddenType);
+                }
+            });
+        }
+    </script>
+</body>
+</html>

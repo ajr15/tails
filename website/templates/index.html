@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Elasticsearch Search App</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <style>
+        body {
+            display: flex;
+            margin: 0;
+            overflow-x: hidden;
+        }
+        
+        .index-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            padding: 20px;
+            transition: margin-right 0.3s ease;
+        }
+        
+        .index-container.chat-open {
+            margin-right: 400px;
+        }
+        
+        .index-logo {
+            width: 100%;
+            max-width: 500px;
+            margin-bottom: 50px;
+        }
+        
+        .index-search-form {
+            width: 100%;
+            max-width: 700px;
+            margin-bottom: 30px;
+        }
+        
+        .search-bar-container {
+            position: relative;
+            display: flex;
+            align-items: center;
+            background: white;
+            border: 2px solid var(--primary-color);
+            border-radius: 50px;
+            box-shadow: 0 2px 10px rgba(0, 123, 255, 0.1);
+            transition: all 0.3s ease;
+        }
+        
+        .search-bar-container:focus-within {
+            border-color: var(--primary-hover);
+            box-shadow: 0 4px 20px rgba(0, 123, 255, 0.2);
+        }
+        
+        .search-bar-container input {
+            flex: 1;
+            padding: 18px 25px;
+            font-size: 18px;
+            border: none;
+            background: transparent;
+            outline: none;
+        }
+        
+        .search-actions {
+            display: flex;
+            gap: 5px;
+            padding-right: 5px;
+        }
+        
+        .search-action-btn {
+            padding: 10px;
+            width: 40px;
+            height: 40px;
+            font-size: 18px;
+            background-color: transparent;
+            color: var(--primary-color);
+            border: none;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            margin: 0;
+        }
+        
+        .search-action-btn:hover {
+            background-color: var(--primary-color);
+            color: white;
+            transform: scale(1.1);
+        }
+        
+        .search-action-btn .tooltip {
+            position: absolute;
+            bottom: -35px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 5px 10px;
+            border-radius: 5px;
+            font-size: 12px;
+            white-space: nowrap;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+        }
+        
+        .search-action-btn:hover .tooltip {
+            opacity: 1;
+        }
+        
+        .index-chat-button {
+            padding: 12px 30px;
+            font-size: 16px;
+            background: white;
+            color: var(--primary-color);
+            border: 2px solid var(--primary-color);
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin: 0;
+        }
+        
+        .index-chat-button:hover {
+            background-color: var(--primary-color);
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(0, 123, 255, 0.3);
+        }
+    </style>
+</head>
+<body>
+    <div class="index-container">
+        <img src="{{ url_for('static', filename='images/full_logo.png') }}" alt="Tails Logo" class="index-logo" style="max-width: 600px; margin-bottom: 20px;">
+        
+        <form action="/" method="post" class="index-search-form">
+            <div class="search-bar-container">
+                <input type="text" id="query" name="query" placeholder="Search your documents..." required>
+                <input type="hidden" id="search_mode" name="search_mode" value="normal">
+                <div class="search-actions">
+                    <button type="submit" class="search-action-btn" id="search-btn" onclick="setSearchMode('normal')">
+                        <img src="{{ url_for('static', filename='images/search_color.png') }}" alt="Search" style="width: 24px; height: 24px;">
+                        <span class="tooltip">Search</span>
+                    </button>
+                    <button type="submit" class="search-action-btn" id="ai-search-btn" onclick="setSearchMode('ai')">
+                        <img src="{{ url_for('static', filename='images/ai_search_color.png') }}" alt="AI Search" style="width: 24px; height: 24px;">
+                        <span class="tooltip">AI Search (beta)</span>
+                    </button>
+                    <div style="width: 2px; height: 24px; background-color: var(--border-color); margin: auto auto;"></div>
+                    <button type="button" class="search-action-btn" id="chat-btn" onclick="toggleChat()">
+                        <img src="{{ url_for('static', filename='images/chat_color.png') }}" alt="Chat" style="width: 24px; height: 24px;">
+                        <span class="tooltip">Chat with wiLLMa</span>
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <div class="chat-window" id="chat-window">
+        <button class="close-btn" onclick="toggleChat()">×</button>
+        <iframe src="/chat"></iframe>
+    </div>
+
+    <script>
+        function setSearchMode(mode) {
+            document.getElementById('search_mode').value = mode;
+            if (mode === 'ai') {
+                const form = document.querySelector('.index-search-form');
+                const aiInput = document.createElement('input');
+                aiInput.type = 'hidden';
+                aiInput.name = 'search_type';
+                aiInput.value = 'true';
+                form.appendChild(aiInput);
+            }
+        }
+        
+        function toggleChat() {
+            const chatWindow = document.getElementById('chat-window');
+            const indexContainer = document.querySelector('.index-container');
+            
+            if (chatWindow.style.display === 'none' || chatWindow.style.display === '') {
+                chatWindow.style.display = 'block';
+                indexContainer.classList.add('chat-open');
+            } else {
+                chatWindow.style.display = 'none';
+                indexContainer.classList.remove('chat-open');
+            }
+        }
+        
+        // Handle button hover for image swapping
+        const searchBtn = document.getElementById('search-btn');
+        const aiSearchBtn = document.getElementById('ai-search-btn');
+        
+        if (searchBtn) {
+            searchBtn.addEventListener('mouseenter', function() {
+                this.querySelector('img').src = "{{ url_for('static', filename='images/search.png') }}";
+            });
+            searchBtn.addEventListener('mouseleave', function() {
+                this.querySelector('img').src = "{{ url_for('static', filename='images/search_color.png') }}";
+            });
+        }
+        
+        if (aiSearchBtn) {
+            aiSearchBtn.addEventListener('mouseenter', function() {
+                this.querySelector('img').src = "{{ url_for('static', filename='images/ai_search.png') }}";
+            });
+            aiSearchBtn.addEventListener('mouseleave', function() {
+                this.querySelector('img').src = "{{ url_for('static', filename='images/ai_search_color.png') }}";
+            });
+        }
+        
+        const chatBtn = document.getElementById('chat-btn');
+        if (chatBtn) {
+            chatBtn.addEventListener('mouseenter', function() {
+                this.querySelector('img').src = "{{ url_for('static', filename='images/chat.png') }}";
+            });
+            chatBtn.addEventListener('mouseleave', function() {
+                this.querySelector('img').src = "{{ url_for('static', filename='images/chat_color.png') }}";
+            });
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>tails</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <img src="{{ url_for('static', filename='images/logo.svg') }}" alt="" class="logo-image">
+    <a href="/" class="back-to-search">Back to Search</a>
+    
+    <h1>Indexing Tasks Information</h1>
+
+    <!-- Button to open the New Job modal -->
+    
+    <!-- Existing Jobs Information -->
+    <div id="existingJobs">
+        <h2>Existing Jobs</h2>
+        <!-- Display information about existing jobs here -->
+        <!-- We use JS to dynamically load existing jobs information -->
+    </div>
+    
+    <button onclick="openModal('newJobModal')">Create a New Task</button>
+    <!-- New Job Modal -->
+    <div id="newJobModal" class="modal">
+        <h2>Create a New Job</h2>
+        <!-- Add the form fields for creating a new job here -->
+        <form action="/index" method="post" class="new-job-form" enctype="multipart/form-data">
+            <table>
+                <tr>
+                    <td><p>Job name</p></td>
+                    <td><input type="text" name="jobName" id="jobName" required></td>
+                </tr>
+                <tr>
+                    <td><p>Target Directory</p></td>
+                    <td><input type="text" name="targetDirectory" id="targetDirectory" required></td>
+                </tr>
+            </table>
+            
+      <table>
+        <td><button type="submit" onclick="closeAllModals()">Start Indexing</button></td>
+        <td><button type="reset" onclick="closeAllModals()">Cancel</button></td>
+      </table>              
+        </form>
+    </div>
+
+    <!-- Modal Overlay -->
+    <div id="modalOverlay" class="modal-overlay" onclick="closeAllModals()"></div>
+
+    <h1>File Statistics</h1>
+    <div class="elasticsearch-statistics" id="elasticsearchDashboard"></div>
+
+    <script src="{{ url_for('static', filename='js/fscrawler_modals.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/existing_jobs_info.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/elasticsearch_statistics.js') }}"></script>
+</body>
+
+</html>
