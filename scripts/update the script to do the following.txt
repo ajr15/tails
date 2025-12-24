@@ -1,0 +1,5 @@
+update the script to do the following
+1. query elasticsearch index (given name) for documents with doc.file.extension = 'pdf'
+2. get the index, ids and paths for all documents by fetching doc._source, doc._id and doc.path.real
+3. for each path, analyze it using the ```analyze_file``` function
+4. update the original doc record in elasticsearch with the json data from (3)

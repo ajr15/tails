@@ -1,0 +1,6 @@
+#!/bin/bash
+python index_folder.py pdfs ~/Tails/Samples/PHD_litreture --new
+python index_dwg.py pdfs --reindex
+python index_llm.py pdfs
+python analyze_pdf_layout.py pdfs 10
+
